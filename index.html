@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국소 안전 관리 시스템</title>
+    <!-- QR 코드 라이브러리 추가 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* 전체 스타일 */
+        * {
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* 헤더 영역 스타일 */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* 검색 및 필터 */
+        .search-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        /* 검색 컨테이너 */
+        .search-container {
+            display: flex;
+            flex-grow: 1;
+        }
+        
+        .search-input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            border-right: none;
+            font-size: 14px;
+        }
+        
+        .search-btn {
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .search-btn:hover {
+            background-color: #2563eb;
+        }
+        
+        .search-filter select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* 테이블 스타일 */
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background-color: #f2f2f2;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            font-weight: 600;
+        }
+
+        /* 위험 등급 배지 */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-C1 {
+            background-color: #e7f5e7;
+            color: #1e7e1e;
+        }
+        .badge-C2 {
+            background-color: #e1f0ff;
+            color: #1e70b8;
+        }
+        .badge-C3 {
+            background-color: #fff8e6;
+            color: #b7791f;
+        }
+        .badge-C4 {
+            background-color: #ffedd5;
+            color: #c2410c;
+        }
+        .badge-S {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* 장비 아이콘 스타일 */
+        .equipment-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .equipment-item {
+            display: flex;
+            align-items: center;
+            background-color: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .equipment-icon {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        .btn-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+
+        /* 폼 스타일 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-grid input, .form-grid select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        /* 모달 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .close-btn {
+            border: none;
+            background: none;
+            color: #ef4444;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .info-section {
+            margin-bottom: 16px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .edit-btn {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .edit-btn:hover {
+            background-color: #e5e7eb;
+        }
+        .edit-form {
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        .edit-textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .edit-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .edit-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: flex-end;
+        }
+        .info-list {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+        .qr-code-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .qr-code {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .qr-code-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        /* 이미지 컨테이너 스타일 */
+        .image-container {
+            margin-top: 10px;
+            border: 1px dashed #ddd;
+            padding: 15px;
+            min-height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .mt-4 {
+            margin-top: 16px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-gray-500 {
+            color: #6b7280;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            cursor: pointer;
+        }
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .ml-2 {
+            margin-left: 8px;
+        }
+        .text-sm {
+            font-size: 12px;
+        }
+        .text-gray-600 {
+            color: #4b5563;
+        }
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        /* 페이지네이션 스타일 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .page-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            background-color: #f3f4f6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .page-item:hover {
+            background-color: #e5e7eb;
+        }
+        .page-item.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .page-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .record-info {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        /* 모바일 반응형 스타일 */
+        @media (max-width: 768px) {
+            /* 헤더 조정 */
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .header-container h1 {
+                margin-bottom: 0;
+            }
+            
+            /* 검색 및 필터 조정 */
+            .search-filter {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+            
+            .search-filter select {
+                width: 100%;
+            }
+            
+            /* 테이블 헤더 조정 - 국소 이름과 상세 보기만 표시 */
+            .table-container th:nth-child(2),
+            .table-container th:nth-child(3),
+            .table-container th:nth-child(4) {
+                display: none;
+            }
+            
+            /* 테이블 셀 조정 - 국소 이름과 상세 보기만 표시 */
+            .table-container td:nth-child(2),
+            .table-container td:nth-child(3),
+            .table-container td:nth-child(4) {
+                display: none;
+            }
+            
+            /* 국소 이름 셀 너비 조정 */
+            .table-container td:first-child {
+                width: 60%;
+            }
+            
+            /* 상세보기 버튼 셀 너비 조정 */
+            .table-container td:last-child {
+                width: 40%;
+                text-align: right;
+            }
+            
+            /* 버튼 크기 조정 */
+            .btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            /* 모달 패딩 조정 */
+            .modal {
+                padding: 10px;
+            }
+            
+            /* 모달 콘텐츠 너비 조정 */
+            .modal-content {
+                width: 95%;
+                padding: 16px;
+            }
+            
+            /* 폼 그리드 조정 */
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- 헤더 영역 - 타이틀과 국소 추가 버튼 -->
+            <div class="header-container">
+                <h1>국소 안전 관리 시스템</h1>
+                <button id="addLocationBtn" class="btn btn-primary">+ 국소 추가</button>
+            </div>
+            
+            <!-- 검색 및 필터 -->
+            <div class="search-filter">
+                <div class="search-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="국소 이름 검색">
+                    <button id="searchBtn" class="search-btn">검색</button>
+                </div>
+                <select id="riskFilterSelect">
+                    <option value="all">전체</option>
+                    <option value="C1">C1</option>
+                    <option value="C2">C2</option>
+                    <option value="C3">C3</option>
+                    <option value="C4">C4</option>
+                    <option value="S">S</option>
+                </select>
+            </div>
+
+            <!-- 장소 테이블 -->
+            <div class="table-container">
+                <table id="locationsTable">
+                    <thead>
+                        <tr>
+                            <th>국소 이름</th>
+                            <th>위치</th>
+                            <th>위험 등급</th>
+                            <th>필요한 보호장구</th>
+                            <th>상세 정보</th>
+                        </tr>
+                    </thead>
+                    <tbody id="locationsTableBody">
+                        <!-- 자바스크립트로 채워짐 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="pagination" id="pagination">
+                <!-- 페이지네이션 버튼이 자바스크립트로 채워짐 -->
+            </div>
+            <div class="record-info" id="recordInfo">
+                <!-- 페이지 정보가 자바스크립트로 채워짐 -->
+            </div>
+
+            <!-- CSV 불러오기/내보내기 -->
+            <div class="btn-container">
+                <button id="exportButton" class="btn btn-success">CSV 다운로드</button>
+                <input type="file" id="csvFileInput" accept=".csv" class="file-input">
+                <label for="csvFileInput" class="btn btn-warning file-label">CSV 업로드</label>
+            </div>
+
+            <!-- 시스템 사용 설명 -->
+            <div class="card" style="margin-top: 20px;">
+                <h2>시스템 사용 설명</h2>
+                
+                <div class="info-section">
+                    <!-- QR 코드 생성 및 스캔 방법 -->
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold mb-2">QR 코드 사용 방법</h3>
+                        <ul class="info-list">
+                            <li>국소 상세 보기 화면에서 QR 코드를 다운로드하세요.</li>
+                            <li>QR 코드를 출력하여 해당 국소에 부착하세요.</li>
+                            <li>스마트폰으로 QR 코드를 스캔하면 해당 국소의 상세 정보 페이지로 직접 이동합니다.</li>
+                            <li>출력하기 전에 '링크 복사' 버튼으로 URL을 복사하여 접속 테스트를 해보세요.</li>
+                        </ul>
+                    </div>
+
+                    <!-- 위험 등급 정보 -->
+                    <div class="info-section">
+                        <h3>위험 등급 정보</h3>
+                        <ul class="info-list">
+                            <li><strong>C1</strong>: 낮은 위험 - 정기 점검 필요</li>
+                            <li><strong>C2</strong>: 일반 위험 - 주의 필요</li>
+                            <li><strong>C3</strong>: 중간 위험 - 자격자만 접근 가능</li>
+                            <li><strong>C4</strong>: 높은 위험 - 특별 허가 필요</li>
+                            <li><strong>S</strong>: 특별 위험 - 최고 수준 주의 필요</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상세 정보 모달 -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">국소 상세 정보</h2>
+                <button class="close-btn" id="closeDetailModal">&times;</button>
+            </div>
+            
+            <div class="info-section">
+                <h3>기본 정보</h3>
+                <div id="basicInfo"></div>
+            </div>
+            
+            <div class="info-section">
+                <div class="section-header">
+                    <h3>필요한 보호장구</h3>
+                    <button class="edit-btn" id="editProtectionBtn">수정</button>
+                </div>
+                <ul id="protectionList" class="info-list"></ul>
+                <div id="editProtectionForm" class="edit-form" style="display: none;">
+                    <textarea id="protectionTextarea" rows="3" class="edit-textarea" placeholder="쉼표로 구분하여 입력하세요"></textarea>
+                    <div class="edit-buttons">
+                        <button class="btn btn-success" id="saveProtectionBtn">저장</button>
+                        <button class="btn btn-warning" id="cancelProtectionBtn">취소</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="section-header">
+                    <h3>안전 조치</h3>
+                    <button class="edit-btn" id="editSafetyBtn">수정</button>
+                </div>
+                <ul id="safetyList" class="info-list"></ul>
+                <div id="editSafetyForm" class="edit-form" style="display: none;">
+                    <textarea id="safetyTextarea" rows="3" class="edit-textarea" placeholder="쉼표로 구분하여 입력하세요"></textarea>
+                    <div class="edit-buttons">
+                        <button class="btn btn-success" id="saveSafetyBtn">저장</button>
+                        <button class="btn btn-warning" id="cancelSafetyBtn">취소</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="section-header">
+                    <h3>긴급 연락처</h3>
+                    <button class="edit-btn" id="editContactBtn">수정</button>
+                </div>
+                <p id="emergencyContact"></p>
+                <div id="editContactForm" class="edit-form" style="display: none;">
+                    <input type="text" id="contactTextInput" class="edit-input">
+                    <div class="edit-buttons">
+                        <button class="btn btn-success" id="saveContactBtn">저장</button>
+                        <button class="btn btn-warning" id="cancelContactBtn">취소</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="qr-code-container">
+                <div id="qrcode" class="qr-code"></div>
+                <div class="qr-code-actions mt-2">
+                    <button id="downloadQrBtn" class="btn btn-sm btn-primary">QR 코드 다운로드</button>
+                    <button id="copyLinkBtn" class="btn btn-sm btn-success">링크 복사</button>
+                </div>
+            </div>
+            
+            <!-- 국소 사진 부분 -->
+            <div class="info-section mt-4">
+                <div class="section-header">
+                    <h3>국소 사진</h3>
+                    <button class="edit-btn" id="uploadImageBtn">사진 업로드</button>
+                </div>
+                <div class="image-container" id="locationImageContainer">
+                    <p id="noImageText" class="text-center text-gray-500">등록된 사진이 없습니다.</p>
+                    <img id="locationImage" style="display: none; max-width: 100%;" alt="국소 사진">
+                </div>
+                <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- 국소 추가 모달 -->
+    <div id="addLocationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>새로운 국소 추가</h2>
+                <button class="close-btn" id="closeAddModal">&times;</button>
+            </div>
+            
+            <form id="addLocationForm" class="form-grid">
+                <input type="text" id="nameInput" placeholder="국소 이름" required>
+                <input type="text" id="locationInput" placeholder="국소 위치">
+                <select id="riskLevelSelect">
+                    <option value="C1">C1</option>
+                    <option value="C2">C2</option>
+                    <option value="C3">C3</option>
+                    <option value="C4">C4</option>
+                    <option value="S">S</option>
+                </select>
+                <input type="text" id="protectionInput" placeholder="필요한 보호장구 (쉼표로 구분)">
+                <input type="text" id="safetyInput" placeholder="안전 조치 (쉼표로 구분)">
+                <input type="text" id="contactInput" placeholder="긴급 연락처">
+                <div style="grid-column: span 2; text-align: right; margin-top: 16px;">
+                    <button type="button" class="btn btn-warning" id="cancelAddBtn">취소</button>
+                    <button type="submit" class="btn btn-primary">국소 추가</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 초기 데이터
+        let locations = [
+            {
+                id: '1',
+                name: '국소 A',
+                location: '1층 기계실',
+                riskLevel: 'C2',
+                requiredProtection: ['헬멧', '장갑', '안전화', '귀마개'],
+                safetyMeasures: ['환기 필요', '출입 제한', '작업 전 안전 교육 필수'],
+                emergencyContact: '010-1234-5678',
+                image: null
+            },
+            {
+                id: '2',
+                name: '국소 B',
+                location: '2층 화학 실험실',
+                riskLevel: 'S',
+                requiredProtection: ['화학 방호복', '보안경', '장갑', '마스크'],
+                safetyMeasures: ['누출 시 즉시 대피', '화학물질 취급 주의', '샤워 시설 인접'],
+                emergencyContact: '010-9876-5432',
+                image: null
+            },
+            {
+                id: '3',
+                name: '국소 C',
+                location: '3층 전기실',
+                riskLevel: 'C3',
+                requiredProtection: ['절연 장갑', '안전화', '헬멧'],
+                safetyMeasures: ['전원 차단 후 작업', '접지 확인'],
+                emergencyContact: '010-5555-6666',
+                image: null
+            },
+            {
+                id: '4',
+                name: '국소 D',
+                location: '지하 1층 보일러실',
+                riskLevel: 'C4',
+                requiredProtection: ['내열 장갑', '안전화', '방화복'],
+                safetyMeasures: ['화상 주의', '환기 필수'],
+                emergencyContact: '010-7777-8888',
+                image: null
+            },
+            {
+                id: '5',
+                name: '국소 E',
+                location: '옥상 냉각탑',
+                riskLevel: 'C1',
+                requiredProtection: ['안전모', '장갑'],
+                safetyMeasures: ['추락 주의', '정기 점검'],
+                emergencyContact: '010-9999-0000',
+                image: null
+            }
+        ];
+
+        // 페이지네이션 관련 변수
+        let currentPage = 1;
+        const itemsPerPage = 3; // 페이지당 표시할 항목 수
+        let totalPages = 1;
+        let filteredLocations = [];
+
+        // 현재 웹사이트 주소 가져오기
+        function getCurrentWebsiteUrl() {
+            return window.location.href.split('?')[0]; // 파라미터 제거
+        }
+
+        // 공유 가능한 링크 생성
+        function getShareableLink(locationId) {
+            return getCurrentWebsiteUrl() + '?id=' + locationId;
+        }
+
+        // URL에서 국소 ID 가져오기
+        function getLocationIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // 장비 아이콘 매핑
+        const equipmentIcons = {
+            '헬멧': '⛑️',
+            '장갑': '🧤',
+            '안전화': '👢',
+            '보안경': '👓',
+            '마스크': '😷',
+            '귀마개': '🎧',
+            '방진 마스크': '😷',
+            '화학 방호복': '🥼',
+            '절연 장갑': '🧤',
+            '내열 장갑': '🧤',
+            '안전모': '⛑️',
+            '방화복': '🥼'
+        };
+
+        // DOM 요소 참조
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const riskFilterSelect = document.getElementById('riskFilterSelect');
+        const locationsTableBody = document.getElementById('locationsTableBody');
+        const pagination = document.getElementById('pagination');
+        const recordInfo = document.getElementById('recordInfo');
+        const addLocationForm = document.getElementById('addLocationForm');
+        const nameInput = document.getElementById('nameInput');
+        const locationInput = document.getElementById('locationInput');
+        const riskLevelSelect = document.getElementById('riskLevelSelect');
+        const protectionInput = document.getElementById('protectionInput');
+        const safetyInput = document.getElementById('safetyInput');
+        const contactInput = document.getElementById('contactInput');
+        const exportButton = document.getElementById('exportButton');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const detailModal = document.getElementById('detailModal');
+        const closeDetailModal = document.getElementById('closeDetailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const basicInfo = document.getElementById('basicInfo');
+        const protectionList = document.getElementById('protectionList');
+        const safetyList = document.getElementById('safetyList');
+        const emergencyContact = document.getElementById('emergencyContact');
+        const qrCodeDiv = document.getElementById('qrcode');
+        const uploadImageBtn = document.getElementById('uploadImageBtn');
+        const imageFileInput = document.getElementById('imageFileInput');
+        const locationImage = document.getElementById('locationImage');
+        const noImageText = document.getElementById('noImageText');
+        const downloadQrBtn = document.getElementById('downloadQrBtn');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        
+        // 국소 추가 모달 요소 참조
+        const addLocationBtn = document.getElementById('addLocationBtn');
+        const addLocationModal = document.getElementById('addLocationModal');
+        const closeAddModal = document.getElementById('closeAddModal');
+        const cancelAddBtn = document.getElementById('cancelAddBtn');
+
+        // 검색 함수
+        function performSearch() {
+            currentPage = 1; // 검색 시 첫 페이지로 이동
+            renderLocationsTable();
+        }
+
+        // 검색 버튼 클릭 이벤트
+        searchBtn.addEventListener('click', performSearch);
+
+        // 검색 입력창 Enter 키 이벤트
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 폼 제출 방지
+                performSearch();
+            }
+        });
+
+        // 페이지네이션 렌더링 함수
+        function renderPagination() {
+            pagination.innerHTML = '';
+            
+            // 이전 페이지 버튼
+            const prevBtn = document.createElement('div');
+            prevBtn.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevBtn.textContent = '<';
+            if (currentPage > 1) {
+                prevBtn.addEventListener('click', () => {
+                    currentPage--;
+                    renderLocationsTable();
+                });
+            }
+            pagination.appendChild(prevBtn);
+            
+            // 페이지 번호 버튼
+            for (let i = 1; i <= totalPages; i++) {
+                const pageBtn = document.createElement('div');
+                pageBtn.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderLocationsTable();
+                });
+                pagination.appendChild(pageBtn);
+            }
+            
+            // 다음 페이지 버튼
+            const nextBtn = document.createElement('div');
+            nextBtn.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextBtn.textContent = '>';
+            if (currentPage < totalPages) {
+                nextBtn.addEventListener('click', () => {
+                    currentPage++;
+                    renderLocationsTable();
+                });
+            }
+            pagination.appendChild(nextBtn);
+            
+            // 레코드 정보 업데이트
+            const startIndex = (currentPage - 1) * itemsPerPage + 1;
+            const endIndex = Math.min(startIndex + itemsPerPage - 1, filteredLocations.length);
+            recordInfo.textContent = `${startIndex}-${endIndex} / ${filteredLocations.length} 항목`;
+        }
+
+        // 테이블 렌더링 함수
+        function renderLocationsTable() {
+            // 필터링
+            const searchTerm = searchInput.value.toLowerCase();
+            const riskFilter = riskFilterSelect.value;
+            
+            filteredLocations = locations.filter(loc => 
+                loc.name.toLowerCase().includes(searchTerm) && 
+                (riskFilter === 'all' || loc.riskLevel === riskFilter)
+            );
+
+            // 총 페이지 수 계산
+            totalPages = Math.ceil(filteredLocations.length / itemsPerPage);
+            if (totalPages === 0) totalPages = 1;
+            
+            // 현재 페이지가 총 페이지 수를 초과하는 경우 조정
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+            
+            // 페이지네이션 적용
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const paginatedLocations = filteredLocations.slice(startIndex, startIndex + itemsPerPage);
+            
+            // 테이블 내용 지우기
+            locationsTableBody.innerHTML = '';
+            
+            // 테이블 채우기
+            paginatedLocations.forEach(location => {
+                const row = document.createElement('tr');
+                
+                // 국소 이름
+                const nameCell = document.createElement('td');
+                nameCell.textContent = location.name;
+                row.appendChild(nameCell);
+                
+                // 위치
+                const locationCell = document.createElement('td');
+                locationCell.textContent = location.location;
+                row.appendChild(locationCell);
+                
+                // 위험 등급
+                const riskCell = document.createElement('td');
+                const riskBadge = document.createElement('span');
+                riskBadge.className = `badge badge-${location.riskLevel}`;
+                riskBadge.textContent = location.riskLevel;
+                riskCell.appendChild(riskBadge);
+                row.appendChild(riskCell);
+                
+                // 필요한 보호장구
+                const protectionCell = document.createElement('td');
+                const equipmentContainer = document.createElement('div');
+                equipmentContainer.className = 'equipment-container';
+                
+                location.requiredProtection.forEach(item => {
+                    const equipmentItem = document.createElement('div');
+                    equipmentItem.className = 'equipment-item';
+                    
+                    const icon = document.createElement('span');
+                    icon.className = 'equipment-icon';
+                    icon.textContent = equipmentIcons[item] || '🛡️';
+                    
+                    const text = document.createElement('span');
+                    text.textContent = item;
+                    
+                    equipmentItem.appendChild(icon);
+                    equipmentItem.appendChild(text);
+                    equipmentContainer.appendChild(equipmentItem);
+                });
+                
+                protectionCell.appendChild(equipmentContainer);
+                row.appendChild(protectionCell);
+                
+                // 상세 정보 버튼
+                const detailCell = document.createElement('td');
+                const detailButton = document.createElement('button');
+                detailButton.className = 'btn btn-primary';
+                detailButton.textContent = '상세 보기';
+                detailButton.onclick = () => showDetailModal(location);
+                detailCell.appendChild(detailButton);
+                row.appendChild(detailCell);
+                
+                locationsTableBody.appendChild(row);
+            });
+            
+            // 페이지네이션 업데이트
+            renderPagination();
+        }
+
+        // 현재 보고 있는 국소의 ID를 저장
+        let currentLocationId = null;
+
+        // 상세 정보 모달 표시
+        function showDetailModal(location) {
+            // 현재 국소 ID 저장
+            currentLocationId = location.id;
+            
+            modalTitle.textContent = `${location.name} 상세 정보`;
+            
+            // 위험 등급 설명
+            const riskLevelDescriptions = {
+                'C1': '낮은 위험 (정기 점검)',
+                'C2': '일반 위험 (주의 필요)',
+                'C3': '중간 위험 (자격자만 접근 가능)',
+                'C4': '높은 위험 (특별 허가 필요)',
+                'S': '특별 위험 (최고 수준 주의 필요)'
+            };
+
+            // 기본 정보
+            basicInfo.innerHTML = `
+                <p><strong>위치:</strong> ${location.location}</p>
+                <p>
+                    <strong>위험 등급:</strong> 
+                    <span class="badge badge-${location.riskLevel}">
+                        ${location.riskLevel}
+                    </span>
+                    <span class="text-sm text-gray-600 ml-2">${riskLevelDescriptions[location.riskLevel]}</span>
+                </p>
+            `;
+            
+            // 필요한 보호장구
+            protectionList.innerHTML = '';
+            location.requiredProtection.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                protectionList.appendChild(li);
+            });
+            
+            // 안전 조치
+            safetyList.innerHTML = '';
+            location.safetyMeasures.forEach(measure => {
+                const li = document.createElement('li');
+                li.textContent = measure;
+                safetyList.appendChild(li);
+            });
+            
+            // 긴급 연락처
+            emergencyContact.textContent = location.emergencyContact;
+            
+            // 편집 폼 초기화
+            document.getElementById('protectionTextarea').value = location.requiredProtection.join(', ');
+            document.getElementById('safetyTextarea').value = location.safetyMeasures.join(', ');
+            document.getElementById('contactTextInput').value = location.emergencyContact;
+            
+            // 모든 편집 폼 숨기기
+            document.getElementById('editProtectionForm').style.display = 'none';
+            document.getElementById('editSafetyForm').style.display = 'none';
+            document.getElementById('editContactForm').style.display = 'none';
+            
+            // 이미지 표시
+            if (location.image) {
+                locationImage.src = location.image;
+                locationImage.style.display = 'block';
+                noImageText.style.display = 'none';
+            } else {
+                locationImage.style.display = 'none';
+                noImageText.style.display = 'block';
+            }
+            
+            // QR 코드 생성
+            qrCodeDiv.innerHTML = ''; // 기존 QR 코드 제거
+            
+            // 공유 가능한 URL 생성
+            const shareableLink = getShareableLink(location.id);
+            
+            // QRCode.js 라이브러리를 사용하여 QR 코드 생성
+            new QRCode(qrCodeDiv, {
+                text: shareableLink,
+                width: 128,
+                height: 128,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // QR 코드 다운로드 및 링크 복사 기능 설정
+            setupQrCodeActions(location.id);
+            
+            // 모달 표시
+            detailModal.style.display = 'block';
+        }
+
+        // QR 코드 동작 설정
+        function setupQrCodeActions(locationId) {
+            // QR 코드 다운로드
+            downloadQrBtn.onclick = () => {
+                // QR 코드의 이미지 가져오기
+                const img = qrCodeDiv.querySelector('img');
+                if (img) {
+                    // Canvas 생성
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Canvas에 QR 코드 이미지 그리기
+                    ctx.drawImage(img, 0, 0, img.width, img.height);
+                    
+                    // 데이터 URL 생성
+                    const dataURL = canvas.toDataURL('image/png');
+                    
+                    // 다운로드 링크 생성
+                    const link = document.createElement('a');
+                    link.href = dataURL;
+                    link.download = `qrcode-location-${locationId}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert('QR 코드 이미지를 찾을 수 없습니다.');
+                }
+            };
+            
+            // 링크 복사
+            copyLinkBtn.onclick = () => {
+                const shareableLink = getShareableLink(locationId);
+                
+                // 클립보드에 복사
+                const tempInput = document.createElement('input');
+                tempInput.value = shareableLink;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                // 복사 확인 알림
+                alert('국소 페이지 링크가 클립보드에 복사되었습니다!');
+            };
+        }
+
+        // 국소 추가 모달 열기/닫기
+        addLocationBtn.addEventListener('click', function() {
+            addLocationModal.style.display = 'block';
+        });
+
+        closeAddModal.addEventListener('click', function() {
+            addLocationModal.style.display = 'none';
+        });
+
+        cancelAddBtn.addEventListener('click', function() {
+            addLocationModal.style.display = 'none';
+        });
+
+        // 보호장구 편집 토글
+        editProtectionBtn.onclick = () => {
+            editProtectionForm.style.display = 'block';
+            protectionTextarea.focus();
+        };
+
+        // 안전 조치 편집 토글
+        editSafetyBtn.onclick = () => {
+            editSafetyForm.style.display = 'block';
+            safetyTextarea.focus();
+        };
+
+        // 긴급 연락처 편집 토글
+        editContactBtn.onclick = () => {
+            editContactForm.style.display = 'block';
+            contactTextInput.focus();
+        };
+
+        // 보호장구 저장
+        saveProtectionBtn.onclick = () => {
+            const locationIndex = locations.findIndex(loc => loc.id === currentLocationId);
+            if (locationIndex !== -1) {
+                const newProtection = protectionTextarea.value
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(item => item);
+                
+                locations[locationIndex].requiredProtection = newProtection;
+                
+                // 목록 업데이트
+                protectionList.innerHTML = '';
+                newProtection.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    protectionList.appendChild(li);
+                });
+                
+                // 변경사항 반영을 위해 테이블 다시 그리기
+                renderLocationsTable();
+                
+                // 폼 숨기기
+                editProtectionForm.style.display = 'none';
+            }
+        };
+
+        // 안전 조치 저장
+        saveSafetyBtn.onclick = () => {
+            const locationIndex = locations.findIndex(loc => loc.id === currentLocationId);
+            if (locationIndex !== -1) {
+                const newSafety = safetyTextarea.value
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(item => item);
+                
+                locations[locationIndex].safetyMeasures = newSafety;
+                
+                // 목록 업데이트
+                safetyList.innerHTML = '';
+                newSafety.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    safetyList.appendChild(li);
+                });
+                
+                // 폼 숨기기
+                editSafetyForm.style.display = 'none';
+            }
+        };
+
+        // 긴급 연락처 저장
+        saveContactBtn.onclick = () => {
+            const locationIndex = locations.findIndex(loc => loc.id === currentLocationId);
+            if (locationIndex !== -1) {
+                const newContact = contactTextInput.value.trim();
+                locations[locationIndex].emergencyContact = newContact;
+                
+                // 텍스트 업데이트
+                emergencyContact.textContent = newContact;
+                
+                // 폼 숨기기
+                editContactForm.style.display = 'none';
+            }
+        };
+
+        // 취소 버튼
+        cancelProtectionBtn.onclick = () => {
+            editProtectionForm.style.display = 'none';
+        };
+
+        cancelSafetyBtn.onclick = () => {
+            editSafetyForm.style.display = 'none';
+        };
+
+        cancelContactBtn.onclick = () => {
+            editContactForm.style.display = 'none';
+        };
+
+        // 모달 닫기
+        closeDetailModal.onclick = () => {
+            detailModal.style.display = 'none';
+        };
+
+        // 배경 클릭하면 모달 닫기
+        window.onclick = (event) => {
+            if (event.target === detailModal) {
+                detailModal.style.display = 'none';
+            }
+            if (event.target === addLocationModal) {
+                addLocationModal.style.display = 'none';
+            }
+        };
+
+        // 이미지 업로드 기능
+        uploadImageBtn.addEventListener('click', () => {
+            imageFileInput.click();
+        });
+
+        imageFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 이미지 크기 제한 (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('이미지 크기는 5MB 이하여야 합니다.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const locationIndex = locations.findIndex(loc => loc.id === currentLocationId);
+                if (locationIndex !== -1) {
+                    // 이미지 저장
+                    locations[locationIndex].image = event.target.result;
+                    
+                    // 이미지 표시
+                    locationImage.src = event.target.result;
+                    locationImage.style.display = 'block';
+                    noImageText.style.display = 'none';
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 새 국소 추가
+        addLocationForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newLocation = {
+                id: Date.now().toString(),
+                name: nameInput.value,
+                location: locationInput.value,
+                riskLevel: riskLevelSelect.value,
+                requiredProtection: protectionInput.value.split(',').map(item => item.trim()).filter(item => item),
+                safetyMeasures: safetyInput.value.split(',').map(item => item.trim()).filter(item => item),
+                emergencyContact: contactInput.value,
+                image: null
+            };
+            
+            locations.push(newLocation);
+            renderLocationsTable();
+            
+            // 폼 초기화
+            nameInput.value = '';
+            locationInput.value = '';
+            riskLevelSelect.value = 'C1';
+            protectionInput.value = '';
+            safetyInput.value = '';
+            contactInput.value = '';
+            
+            // 모달 닫기
+            addLocationModal.style.display = 'none';
+        });
+
+        // CSV 내보내기
+        exportButton.addEventListener('click', () => {
+            // CSV 헤더
+            const headers = ['id', 'name', 'location', 'riskLevel', 'requiredProtection', 'safetyMeasures', 'emergencyContact'];
+            
+            // CSV 내용 생성
+            const csvContent = [
+                headers.join(','),
+                ...locations.map(loc => 
+                    headers.map(header => {
+                        if (header === 'requiredProtection' || header === 'safetyMeasures') {
+                            return `"${loc[header].join(';')}"`;
+                        } else {
+                            return loc[header];
+                        }
+                    }).join(',')
+                )
+            ].join('\n');
+            
+            // 파일 다운로드
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'safety_locations.csv');
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // CSV 가져오기
+        csvFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                const rows = text.split('\n');
+                const headers = rows[0].split(',');
+                
+                // CSV를 객체 배열로 변환
+                const newLocations = rows.slice(1).map(row => {
+                    if (!row.trim()) return null; // 빈 줄 건너뛰기
+
+                    const values = row.split(',');
+                    const location = {};
+                    
+                    headers.forEach((header, index) => {
+                        if (header === 'requiredProtection' || header === 'safetyMeasures') {
+                            // 쌍따옴표 제거 및 세미콜론으로 분리
+                            location[header] = values[index].replace(/"/g, '').split(';');
+                        } else {
+                            location[header] = values[index];
+                        }
+                    });
+                    
+                    return location;
+                }).filter(loc => loc !== null);
+                
+                // 데이터 업데이트 및 테이블 다시 렌더링
+                locations = newLocations;
+                currentPage = 1; // 첫 페이지로 이동
+                renderLocationsTable();
+            };
+            reader.readAsText(file);
+        });
+
+        // 검색 및 필터 이벤트
+        riskFilterSelect.addEventListener('change', function() {
+            currentPage = 1; // 필터 변경 시 첫 페이지로 이동
+            renderLocationsTable();
+        });
+
+        // 페이지 로드 시 URL 파라미터 체크
+        window.addEventListener('DOMContentLoaded', () => {
+            const locationId = getLocationIdFromUrl();
+            if (locationId) {
+                // URL에 국소 ID가 있으면 해당 국소의 상세 정보 표시
+                const location = locations.find(loc => loc.id === locationId);
+                if (location) {
+                    showDetailModal(location);
+                }
+            }
+            
+            // 초기 테이블 렌더링
+            renderLocationsTable();
+        });
+    </script>
+</body>
+</html>
